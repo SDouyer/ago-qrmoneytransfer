@@ -214,6 +214,7 @@ app.get("/transactions/validate/:id", (req, res) => {
   if (check.valid) {
     const transaction = transactions[transactionId];
     users[transaction.from].balance = users[transaction.from].balance - transaction.amount;
+    users[transaction.to].balance = users[transaction.to].balance + transaction.amount;
     transactions[transactionId].validated = true;
     transactions[transactionId].validatedAt = new Date().toLocaleString();
 
