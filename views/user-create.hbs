@@ -1,0 +1,33 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">
+        {{title}}
+      </div>
+    </div>
+    <div class="page-header-right">
+      <a href="/users" class="btn btn-outline-secondary">Retour à la liste Utilisateurs</a>
+    </div>
+  </div>
+  <div class="page-layout">
+    <div class="card card-form">
+      <form action="/users/create" method="post">
+        <div class="mb-3">
+          <label for="firstname" class="form-label">Prénom</label>
+          <input type="text" class="form-control" name="firstname" required>
+        </div>
+        <div class="mb-3">
+          <label for="lastname" class="form-label">Nom</label>
+          <input type="text" class="form-control" name="lastname" required>
+        </div>
+        <!-- <div class="mb-3">
+          <label for="balance" class="form-label">Solde</label>
+          <input type="number" class="form-control" name="balance" min="0" step="1" placeholder="100" required>
+        </div> -->
+        <div class="mt-5 d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Créer Utilisateur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

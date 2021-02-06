@@ -1,0 +1,49 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">
+        {{title}}
+      </div>
+    </div>
+    <div class="page-header-right">
+      <a href="/users" class="btn btn-outline-secondary">Retour à la liste Transactions</a>
+    </div>
+  </div>
+  <div class="page-layout">
+    <div class="card card-form">
+      {{#if alert}}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{alert}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {{/if}}
+      <form action="/transactions/create" method="post">
+        <div class="mb-3">
+          <label for="from" class="form-label">Emetteur</label>
+          <select name="from" class="form-select" required>
+            <option disabled selected>Selectionner un émetteur</option>
+            {{#each users}}
+            <option value="{{this.id}}">{{this.firstname}} {{this.lastname}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="amount" class="form-label">Montant</label>
+          <input type="number" class="form-control" name="amount" min="0" step="1" placeholder="100" required>
+        </div>
+        <div class="mb-3">
+          <label for="to" class="form-label">Bénéficiaire</label>
+          <select name="to" class="form-select" required>
+            <option disabled selected>Selectionner un bénéficiaire</option>
+            {{#each users}}
+            <option value="{{this.id}}">{{this.firstname}} {{this.lastname}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="mt-5 d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Créer Utilisateur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
