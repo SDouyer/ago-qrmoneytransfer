@@ -2,7 +2,7 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var exphbs = require('express-handlebars');
-var Ago = require("./ago_corr");
+var Ago = require("./ago");
 const { v4: uuidv4 } = require('uuid');
 
 var app = express();
