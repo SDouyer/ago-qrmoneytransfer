@@ -105,14 +105,12 @@ app.get("/users/create", (req, res) => {
   });
 });
 app.post("/users/create", (req, res) => {
-  // const { firstname, lastname, balance } = req.body;
   const { firstname, lastname } = req.body;
   users[newUserId] = {
     id: newUserId,
     firstname: firstname,
     lastname: lastname,
     balance: 0
-    // balance: balance
   };
   newUserId = newUserId + 1;
   res.redirect("/users");
@@ -213,8 +211,8 @@ app.get("/transactions/validate/:id", (req, res) => {
   const check = checkTransactionValidation(transactionId);
   if (check.valid) {
     const transaction = transactions[transactionId];
-    users[transaction.from].balance = users[transaction.from].balance - transaction.amount;
-    users[transaction.to].balance = users[transaction.to].balance + transaction.amount;
+    users[transaction.from].balance -= transaction.amount;
+    users[transaction.to].balance += transaction.amount;
     transactions[transactionId].validated = true;
     transactions[transactionId].validatedAt = new Date().toLocaleString();
 
