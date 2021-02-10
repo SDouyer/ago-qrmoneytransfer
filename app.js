@@ -2,6 +2,7 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var exphbs = require('express-handlebars');
+var Ago = require("./ago_corr");
 const { v4: uuidv4 } = require('uuid');
 
 var app = express();
@@ -88,12 +89,14 @@ const transactions = {
 app.get("/", (req, res) => {
   res.render("welcome.hbs", {
     layout: "main",
+    appName: Ago.appName,
   });
 });
 
 app.get("/users", (req, res) => {
   res.render("users.hbs", {
     layout: "main",
+    appName: Ago.appName,
     title: "Utilisateurs",
     users: users
   });
@@ -101,6 +104,7 @@ app.get("/users", (req, res) => {
 app.get("/users/create", (req, res) => {
   res.render("user-create.hbs", {
     layout: "main",
+    appName: Ago.appName,
     title: "Créer un nouvel Utilisateur"
   });
 });
@@ -127,6 +131,7 @@ app.get("/transactions", (req, res) => {
 
   res.render("transactions.hbs", {
     layout: "main",
+    appName: Ago.appName,
     title: "Transactions",
     transactions: transactionTable
   });
@@ -135,30 +140,32 @@ app.get("/transactions", (req, res) => {
 app.get("/transactions/create", (req, res) => {
   res.render("transaction-create.hbs", {
     layout: "main",
+    appName: Ago.appName,
     title: "Créer une nouvelle Transaction",
     users: users
   });
 });
 
-function checkTransaction(from, amount, to) {
-  if (users[from] == undefined) {
-    return { valid: false, error: "Emetteur inconnu"};
-  }
-  if (users[to] == undefined) {
-    return { valid: false, error: "Bénéficiaire inconnu"};
-  }
-  if (from === to) {
-    return { valid: false, error: "Bénéficiaire doit être différent d'Emetteur"};
-  }
-  if (users[from].balance < amount) {
-    return { valid: false, error: "Solde insuffisant de l'émetteur"};
-  }
-  return {valid: true};
-}
+// function checkTransaction(from, amount, to) {
+//   if (users[from] == undefined) {
+//     return { valid: false, error: "Emetteur inconnu"};
+//   }
+//   if (users[to] == undefined) {
+//     return { valid: false, error: "Bénéficiaire inconnu"};
+//   }
+//   if (from === to) {
+//     return { valid: false, error: "Bénéficiaire doit être différent d'Emetteur"};
+//   }
+//   if (users[from].balance < amount) {
+//     return { valid: false, error: "Solde insuffisant de l'émetteur"};
+//   }
+//   return {valid: true};
+// }
 
 app.post("/transactions/create", (req, res) => {
   const { from, amount, to } = req.body;
-  const check = checkTransaction(from, parseInt(amount), to);
+  // const check = checkTransaction(from, parseInt(amount), to);
+  const check = Ago.checkTransaction(users, from, parseInt(amount), to);
   if (check.valid) {
     const initiatedAt = new Date().toLocaleString();
     const transactionId = uuidv4();
@@ -176,6 +183,7 @@ app.post("/transactions/create", (req, res) => {
   } else {
     res.render("transaction-create.hbs", {
       layout: "main",
+      appName: Ago.appName,
       title: "Créer une nouvelle Transaction",
       users: users,
       alert: check.error
@@ -187,42 +195,49 @@ app.post("/transactions/create", (req, res) => {
 app.get("/transactions/qrcode/:id", (req, res) => {
   res.render("transaction-qrcode.hbs", {
     layout: "main",
+    appName: Ago.appName,
     title: "Transaction - validation",
-    validationLink: "http://" + req.headers.host + "/transactions/validate/" + req.params.id
+    // validationLink: "http://" + req.headers.host + "/transactions/validate/" + req.params.id
+    validationLink: Ago.generateQrLink("http://" + req.headers.host, "/transactions/validate/", req.params.id)
   });
 });
 
-function checkTransactionValidation(transactionId) {
-  if (transactions[transactionId] == undefined) {
-    return { valid: false, error: "La transaction est inconnue"};
-  }
-  if (transactions[transactionId].validated) {
-    return { valid: false, error: "La transaction a déjà été validée"};
-  }
-  const transaction = transactions[transactionId];
-  if (users[transaction.from].balance < transaction.amount) {
-    return { valid: false, error: "Fonds de l'émetteur insuffisants pour dénouer la transaction"};
-  }
-  return {valid: true};
-}
+// function checkTransactionValidation(transactionId) {
+//   if (transactions[transactionId] == undefined) {
+//     return { valid: false, error: "La transaction est inconnue"};
+//   }
+//   if (transactions[transactionId].validated) {
+//     return { valid: false, error: "La transaction a déjà été validée"};
+//   }
+//   const transaction = transactions[transactionId];
+//   if (users[transaction.from].balance < transaction.amount) {
+//     return { valid: false, error: "Fonds de l'émetteur insuffisants pour dénouer la transaction"};
+//   }
+//   return {valid: true};
+// }
 
 app.get("/transactions/validate/:id", (req, res) => {
   const transactionId = req.params.id;
-  const check = checkTransactionValidation(transactionId);
+  // const check = checkTransactionValidation(transactionId);
+  const check = Ago.checkValidation(users, transactions, transactionId);
   if (check.valid) {
     const transaction = transactions[transactionId];
-    users[transaction.from].balance -= transaction.amount;
-    users[transaction.to].balance += transaction.amount;
+    // users[transaction.from].balance -= transaction.amount;
+    // users[transaction.to].balance += transaction.amount;
+    users[transaction.from].balance = Ago.getNewBalanceEmitter(users[transaction.from].balance, transaction.amount);
+    users[transaction.to].balance = Ago.getNewBalanceBeneficiary(users[transaction.to].balance, transaction.amount);
     transactions[transactionId].validated = true;
     transactions[transactionId].validatedAt = new Date().toLocaleString();
 
     res.render("transaction-validate.hbs", {
       layout: "main",
+      appName: Ago.appName,
       title: "Transaction validée",
     });
   } else {
     res.render("transaction-validate.hbs", {
       layout: "main",
+      appName: Ago.appName,
       title: "Erreur de Validation",
       alert: check.error
     });
